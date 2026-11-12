@@ -539,6 +539,24 @@ export default function App() {
   const [confirmNewPin, setConfirmNewPin] = useState('');
   const fileImportRef = useRef<HTMLInputElement | null>(null);
 
+  const openAdminStudio = () => {
+    window.history.pushState(null, '', '#admin');
+    if (!isAdminUnlocked) {
+      setShowPinModal(true);
+    }
+  };
+
+  const exitAdminStudio = () => {
+    setIsAdminUnlocked(false);
+    setShowPinModal(false);
+    setPinInput('');
+    setPinError(false);
+    if (window.location.hash.includes('admin') || window.location.pathname.includes('/admin')) {
+      const cleanPath = window.location.pathname.replace(/\/admin\/?$/i, '') || '/';
+      window.history.pushState(null, '', cleanPath);
+    }
+  };
+
   // Check URL (`/admin`, `/#admin`, `?admin=true`) & Secret Keyboard Shortcut (`Ctrl + Shift + A`)
   useEffect(() => {
     const checkUrlForAdmin = () => {
@@ -547,6 +565,7 @@ export default function App() {
       const search = window.location.search.toLowerCase();
       if (
         path === '/admin' ||
+        path.endsWith('/admin') ||
         hash === '#admin' ||
         hash === '#/admin' ||
         search.includes('admin=true')
@@ -565,9 +584,9 @@ export default function App() {
       if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
         if (isAdminUnlocked) {
-          setIsAdminUnlocked(false);
+          exitAdminStudio();
         } else {
-          setShowPinModal(true);
+          openAdminStudio();
         }
       }
     };
@@ -708,6 +727,7 @@ export default function App() {
       setShowPinModal(false);
       setPinInput('');
       setPinError(false);
+      window.history.replaceState(null, '', '#admin');
       triggerToast('Welcome to Saduni Ranasinghe Admin Studio');
     } else {
       setPinError(true);
@@ -1166,8 +1186,21 @@ export default function App() {
             </button>
           </nav>
 
-          {/* CTA Action Button */}
+          {/* CTA & Admin Action Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <a
+              href="#admin"
+              onClick={(e) => {
+                e.preventDefault();
+                openAdminStudio();
+              }}
+              className="px-3.5 py-2 rounded-full bg-[#1a1625] hover:bg-[#262135] border border-white/10 hover:border-[#f472b6]/50 text-slate-300 hover:text-[#f472b6] text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+              title="Admin Studio (PIN: 1234)"
+            >
+              <Lock className="w-3.5 h-3.5 text-[#f472b6]" />
+              <span>Admin Portal</span>
+            </a>
+
             <button
               type="button"
               onClick={() => scrollToSection('contact')}
@@ -1201,19 +1234,44 @@ export default function App() {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => scrollToSection(item.id)}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  scrollToSection(item.id);
+                }}
                 className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-[#f472b6] transition"
               >
                 {item.label}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={() => scrollToSection('contact')}
-              className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-[#f472b6] to-[#c084fc] text-[#120f1a] font-bold text-sm text-center shadow-lg"
-            >
-              Join a Class
-            </button>
+
+            <div className="pt-2 border-t border-white/10 space-y-2">
+              <a
+                href="#admin"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileMenuOpen(false);
+                  openAdminStudio();
+                }}
+                className="w-full py-2.5 px-3 rounded-xl bg-[#262135] text-sm font-semibold text-slate-200 hover:text-[#f472b6] flex items-center justify-between transition"
+              >
+                <span className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-[#f472b6]" />
+                  Admin Studio Portal
+                </span>
+                <span className="text-xs text-[#94a3b8] font-mono">PIN: 1234</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  scrollToSection('contact');
+                }}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#f472b6] to-[#c084fc] text-[#120f1a] font-bold text-sm text-center shadow-lg"
+              >
+                Join a Class
+              </button>
+            </div>
           </div>
         )}
       </header>
@@ -1895,14 +1953,24 @@ export default function App() {
           7. FOOTER
       ========================================== */}
       <footer className="bg-[#1a1625] border-t border-white/[0.07] py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-[#94a3b8]">
-          <p
-            onDoubleClick={() => setShowPinModal(true)}
-            title="Double-click for Admin Studio"
-            className="select-none cursor-default"
-          >
-            Copyright © {new Date().getFullYear()} {store.profile.name}. All Rights Reserved.
-          </p>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-[#94a3b8]">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+            <p>
+              Copyright © {new Date().getFullYear()} {store.profile.name}. All Rights Reserved.
+            </p>
+            <span className="hidden sm:inline text-white/20">•</span>
+            <a
+              href="#admin"
+              onClick={(e) => {
+                e.preventDefault();
+                openAdminStudio();
+              }}
+              className="inline-flex items-center gap-1.5 text-[#f472b6] hover:text-[#c084fc] font-semibold transition"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Admin Studio Portal (Direct Link)</span>
+            </a>
+          </div>
           <p className="font-medium text-[#cbd5e1]">
             Developed by{' '}
             <span className="text-[#f472b6] font-semibold">Helanutsproductions_OL</span>
@@ -2137,10 +2205,10 @@ export default function App() {
       )}
 
       {/* ==========================================
-          HIDDEN ADMIN PIN SECURITY MODAL
+          ADMIN PIN SECURITY MODAL / DIRECT LOGIN
       ========================================== */}
       {showPinModal && !isAdminUnlocked && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
           <div
             className={`bg-[#262135] border border-[#f472b6]/40 rounded-3xl max-w-sm w-full p-7 shadow-2xl space-y-5 transition-transform ${
               pinError ? 'translate-x-2 border-rose-500' : ''
@@ -2158,11 +2226,9 @@ export default function App() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  setShowPinModal(false);
-                  setPinInput('');
-                }}
+                onClick={exitAdminStudio}
                 className="text-slate-400 hover:text-white"
+                title="Return to Public Website"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2188,17 +2254,31 @@ export default function App() {
               </div>
 
               {pinError && (
-                <p className="text-xs text-rose-400 text-center">
+                <p className="text-xs text-rose-400 text-center font-medium">
                   Invalid Security PIN. Please try again.
                 </p>
               )}
 
+              <p className="text-[11px] text-[#94a3b8] text-center">
+                Default PIN: <code className="text-[#f472b6] font-mono font-bold">1234</code>
+              </p>
+
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#f472b6] to-[#c084fc] text-[#120f1a] font-bold text-sm"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#f472b6] to-[#c084fc] text-[#120f1a] font-bold text-sm hover:opacity-95 transition shadow-lg"
               >
                 Unlock Dashboard
               </button>
+
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={exitAdminStudio}
+                  className="text-xs text-slate-400 hover:text-[#f472b6] transition underline underline-offset-4"
+                >
+                  ← Return to Public Website
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -2223,19 +2303,14 @@ export default function App() {
                   </span>
                 </h2>
                 <p className="text-xs text-[#94a3b8]">
-                  Changes auto-save immediately to browser storage ({STORAGE_KEY})
+                  Direct Link: <span className="font-mono text-[#f472b6]">/#admin</span> • Changes auto-saved
                 </p>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() => {
-                setIsAdminUnlocked(false);
-                if (window.location.hash.includes('admin')) {
-                  window.history.replaceState(null, '', window.location.pathname);
-                }
-              }}
+              onClick={exitAdminStudio}
               className="px-4 py-2 rounded-xl bg-[#262135] hover:bg-rose-500/20 border border-white/10 hover:border-rose-400 text-xs sm:text-sm font-semibold text-white flex items-center gap-2 transition"
             >
               <X className="w-4 h-4" />
